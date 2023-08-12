@@ -49,6 +49,10 @@ export class AuthService {
   }
 
   async signin(dto: AuthDto) {
+    if (!dto.email || !dto.password) {
+      throw new BadRequestException('Email and password cannot be empty');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: {
         email: dto.email,
