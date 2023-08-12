@@ -10,4 +10,12 @@ export class UserController {
   getUser(@GetUser() user: User) {
     return user;
   }
+
+  @Get('admin')
+  getAdmin(@GetUser() user: User) {
+    if (user.role === 'admin') {
+      return user;
+    }
+    return 'This is an admin endpoint';
+  }
 }
