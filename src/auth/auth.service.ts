@@ -8,6 +8,7 @@ import * as argon from 'argon2';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class AuthService {
@@ -19,22 +20,28 @@ export class AuthService {
 
   async signup(dto: AuthDto) {
     const hash = await argon.hash(dto.password);
+    try {
+      if (dto.role && !['user', 'admin'].includes(dto.role)) {
+        throw new BadRequestException(
+          'Invalid role. Allowed values: user, admin',
+        );
+      }
+      const user = await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          hash,
+          role: dto.role || 'user',
+        },
+      });
+      delete user.hash;
 
-    if (dto.role && !['user', 'admin'].includes(dto.role)) {
-      throw new BadRequestException(
-        'Invalid role. Allowed values: user, admin',
-      );
+      return user;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new ForbiddenException('User Exist!');
+      }
+      throw error;
     }
-
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        hash,
-        role: dto.role || 'user',
-      },
-    });
-    delete user.hash;
-    return user;
   }
 
   async signin(dto: AuthDto) {
