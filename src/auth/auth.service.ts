@@ -19,6 +19,10 @@ export class AuthService {
   ) {}
 
   async signup(dto: AuthDto) {
+    if (!dto.email || !dto.password) {
+      throw new BadRequestException('Email and password cannot be empty');
+    }
+
     const hash = await argon.hash(dto.password);
     try {
       if (dto.role && !['user', 'admin'].includes(dto.role)) {
