@@ -56,13 +56,17 @@ export class AuthService {
 
     if (!pwMatches) throw new ForbiddenException('Credentials incorrect');
 
-    const token = await this.signToken(user.email);
+    const token = await this.signToken(user.id, user.email);
 
     return { user, token };
   }
 
-  async signToken(email: string): Promise<{ access_token: string }> {
+  async signToken(
+    userId: number,
+    email: string,
+  ): Promise<{ access_token: string }> {
     const payload = {
+      sub: userId,
       email,
     };
     const secret = this.config.get('JWT_SECRET');
